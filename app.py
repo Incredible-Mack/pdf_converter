@@ -1,34 +1,29 @@
-from flask import Flask, request, send_file
-from pdf2docx import Converter
 import os
+from flask import Flask, request, jsonify
+from dotenv import load_dotenv
 
 app = Flask(__name__)
-UPLOAD_FOLDER = 'uploads'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Ensure the uploads directory exists
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+# Load environment variables from a .env file (for local development)
+load_dotenv()
+
+# Read environment variables
+API_KEY = os.environ.get('API_KEY')  # Replace with your actual key names
+
+@app.route('/')
+def index():
+    return 'Welcome to the PDF to DOCX API!'
 
 @app.route('/convert', methods=['POST'])
 def convert_pdf_to_docx():
-    file = request.files.get('pdf_file')
-    
-    if file and file.filename.endswith('.pdf'):
-        pdf_path = os.path.join(app.config['UPLOAD_FOLDER'], file.filename)
-        file.save(pdf_path)
-        
-        # Create the DOCX file path
-        docx_path = pdf_path.replace('.pdf', '.docx')
-        
-        # Initialize the Converter and convert the file
-        cv = Converter(pdf_path)
-        cv.convert(docx_path, start=0, end=None)  # Convert all pages
-        cv.close()
-        
-        # Return the DOCX file
-        return send_file(docx_path, as_attachment=True)
-    
-    return {'error': 'Invalid file format. Please upload a PDF.'}, 400
+    if API_KEY is None:
+        return jsonify({'error': 'API Key not found'}), 500
+
+    # Your PDF to DOCX conversion logic goes here
+    # Use API_KEY as needed
+
+    return jsonify({'message': 'Conversion successful'})
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=5000)
+    port = int(os.environ.get("PORT", 5000))  # Use PORT env var or default to 5000
+    app.run(host='0.0.0.0', port=port)
