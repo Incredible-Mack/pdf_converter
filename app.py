@@ -45,10 +45,26 @@ def convert_pdf_to_docx():
         cv.convert(docx_path, start=0, end=None)  # Convert all pages
         cv.close()
         
-        # Return the DOCX file
-        return send_file(docx_path, as_attachment=True)
+        # Construct the download link (assuming your API is hosted at this URL)
+        download_link = f"{request.host_url}download/{file.filename.replace('.pdf', '.docx')}"
+        
+        # Return the success message with the download link
+        return jsonify({
+            'message': 'Conversion successful',
+            'download_link': download_link
+        }), 200
     
     return jsonify({'error': 'Invalid file format. Please upload a PDF.'}), 400
+
+@app.route('/download/<filename>', methods=['GET'])
+def download_file(filename):
+    """Endpoint to download the converted DOCX file."""
+    docx_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+    
+    if os.path.exists(docx_path):
+        return send_file(docx_path, as_attachment=True)
+    
+    return jsonify({'error': 'File not found.'}), 404
 
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))  # Use PORT env var or default to 5000
